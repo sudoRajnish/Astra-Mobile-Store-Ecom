@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, ShieldCheck, Truck, RotateCcw, Headphones } from "lucide-react";
+import { ArrowRight, ArrowUpRight, ShieldCheck, Truck, RotateCcw, Headphones, Smartphone, Sparkles, Crown } from "lucide-react";
 import { connectDb } from "@/lib/db";
 import { Banner, HomepageSection, Product } from "@/models";
 import { ProductCard, type CatalogProduct } from "@/components/product-card";
@@ -14,22 +14,21 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 async function getHomeData() {
   try {
     await connectDb();
-    const [featured, arrivals, banners, sections] = await Promise.all([
+    const [featured, banners, sections] = await Promise.all([
       Product.find({ published: true, featured: true }).select("name slug brand category images variants._id variants.sku variants.color variants.ram variants.storage variants.price variants.mrp variants.stock rating reviewCount bestseller").sort({ createdAt: -1 }).limit(8).lean(),
-      Product.find({ published: true }).select("name slug brand category images variants._id variants.sku variants.color variants.ram variants.storage variants.price variants.mrp variants.stock rating reviewCount bestseller").sort({ createdAt: -1 }).limit(8).lean(),
       Banner.find({ active: true, $and: [{ $or: [{ startsAt: null }, { startsAt: { $lte: new Date() } }] }, { $or: [{ endsAt: null }, { endsAt: { $gte: new Date() } }] }] }).sort({ order: 1 }).limit(2).lean(),
       HomepageSection.find().sort({ order: 1 }).lean(),
     ]);
-    const emptyDevelopmentCatalog = process.env.NODE_ENV === "development" && featured.length === 0 && arrivals.length === 0;
-    return { featured: JSON.parse(JSON.stringify(emptyDevelopmentCatalog ? demoCatalog : featured)) as CatalogProduct[], arrivals: JSON.parse(JSON.stringify(emptyDevelopmentCatalog ? demoCatalog : arrivals)) as CatalogProduct[], banners: JSON.parse(JSON.stringify(banners)) as { title?: string; subtitle?: string; ctaText?: string; ctaHref?: string; imageDesktop?: string; imageMobile?: string }[], sections: Object.fromEntries(JSON.parse(JSON.stringify(sections)).map((item:{key:string;heading?:string;description?:string;visible:boolean})=>[item.key,item])) as Record<string,{key:string;heading?:string;description?:string;visible:boolean}>, unavailable: false };
+    const emptyDevelopmentCatalog = process.env.NODE_ENV === "development" && featured.length === 0;
+    return { featured: JSON.parse(JSON.stringify(emptyDevelopmentCatalog ? demoCatalog : featured)) as CatalogProduct[], banners: JSON.parse(JSON.stringify(banners)) as { title?: string; subtitle?: string; ctaText?: string; ctaHref?: string; imageDesktop?: string; imageMobile?: string }[], sections: Object.fromEntries(JSON.parse(JSON.stringify(sections)).map((item:{key:string;heading?:string;description?:string;visible:boolean})=>[item.key,item])) as Record<string,{key:string;heading?:string;description?:string;visible:boolean}>, unavailable: false };
   } catch {
     const demo = process.env.NODE_ENV === "development" ? JSON.parse(JSON.stringify(demoCatalog)) as CatalogProduct[] : [] as CatalogProduct[];
-    return { featured: demo, arrivals: demo, banners: [] as { title?: string; subtitle?: string; ctaText?: string; ctaHref?: string; imageDesktop?: string; imageMobile?: string }[], sections: {} as Record<string,{key:string;heading?:string;description?:string;visible:boolean}>, unavailable: process.env.NODE_ENV !== "development" };
+    return { featured: demo, banners: [] as { title?: string; subtitle?: string; ctaText?: string; ctaHref?: string; imageDesktop?: string; imageMobile?: string }[], sections: {} as Record<string,{key:string;heading?:string;description?:string;visible:boolean}>, unavailable: process.env.NODE_ENV !== "development" };
   }
 }
 
 export default async function Home() {
-  const { featured, arrivals, banners, sections, unavailable } = await getHomeData();
+  const { featured, banners, sections, unavailable } = await getHomeData();
   const visible=(key:string)=>sections[key]?.visible??true;
   const primaryBanner = banners[0];
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -49,8 +48,12 @@ export default async function Home() {
       {featured.length ? <div className="product-grid">{featured.map((product) => <ProductCard key={product.slug} product={product} />)}</div> : <div className="empty-catalog">{unavailable ? "Our collection is getting ready. Please check back shortly." : "Our editors are making their first picks. Explore the full collection."}<Link href="/products" className="text-link">Browse all phones <ArrowRight size={16} /></Link></div>}
     </section>}
     {visible("brands")&&<section className="brand-callout"><div className="brand-callout-copy"><p className="eyebrow light-eyebrow">A MORE PERSONAL PICK</p><h2>{sections.brands?.heading||<>Your next favorite<br/>is waiting.</>}</h2><p>{sections.brands?.description||"From everyday essentials to the extraordinary, find your perfect fit across the brands you love."}</p><Link href="/products" className="button button-light">Shop all phones <ArrowRight size={17} /></Link></div><div className="brand-orbit" aria-hidden="true"><div className="brand-orbit-inner">a</div><span>APPLE</span><span>SAMSUNG</span><span>NOTHING</span><span>GOOGLE</span></div></section>}
-    {visible("arrivals")&&<section className="content-section arrivals-section"><div className="section-heading"><div><p className="eyebrow">FRESH FINDS</p><h2>{sections.arrivals?.heading||"Just landed"}</h2><p>{sections.arrivals?.description||"The latest releases, picked for you."}</p></div><Link href="/products?sort=newest" className="text-link">See new arrivals <ArrowRight size={16} /></Link></div>
-      {arrivals.length ? <div className="product-grid">{arrivals.map((product) => <ProductCard key={product.slug} product={product} />)}</div> : <div className="empty-catalog">New arrivals will appear here as soon as theyâ€™re published.</div>}
+    {visible("arrivals")&&<section className="content-section budget-section"><div className="section-heading"><div><p className="eyebrow">A SMARTER WAY TO SHOP</p><h2>{sections.arrivals?.heading && sections.arrivals.heading !== "Just landed" ? sections.arrivals.heading : "Shop by budget"}</h2><p>{sections.arrivals?.description && sections.arrivals.description !== "The latest releases, picked for you." ? sections.arrivals.description : "Start with what you want to spend. Find a phone that feels right."}</p></div></div>
+      <div className="budget-grid">
+        <Link href="/products?max=25000" className="budget-card budget-entry"><div className="budget-card-top"><span>01 · EVERYDAY ESSENTIALS</span><Smartphone aria-hidden="true" /></div><strong>Under <em>₹25,000</em></strong><p>Great cameras, smooth screens and reliable 5G for daily life.</p><div className="budget-card-bottom"><span>Explore phones</span><ArrowUpRight size={17} /></div></Link>
+        <Link href="/products?min=25000&max=59999" className="budget-card budget-upgrade"><div className="budget-card-top"><span>02 · THE SWEET SPOT</span><Sparkles aria-hidden="true" /></div><strong>₹25,000 <small>to</small> <em>₹60,000</em></strong><p>More camera versatility, speed and premium design in every upgrade.</p><div className="budget-card-bottom"><span>Explore phones</span><ArrowUpRight size={17} /></div></Link>
+        <Link href="/products?min=60000" className="budget-card budget-flagship"><div className="budget-card-top"><span>03 · THE EXTRAORDINARY</span><Crown aria-hidden="true" /></div><strong><em>₹60,000+</em></strong><p>Discover flagship performance, pro cameras and standout craftsmanship.</p><div className="budget-card-bottom"><span>Explore phones</span><ArrowUpRight size={17} /></div></Link>
+      </div>
     </section>}
     {visible("newsletter")&&<section className="newsletter" id="newsletter"><div><p className="eyebrow">A LITTLE ASTRA IN YOUR INBOX</p><h2>{sections.newsletter?.heading||"Good things, occasionally."}</h2><p>{sections.newsletter?.description||"New releases, thoughtful recommendations and members-only offers."}</p></div><form action="/api/newsletter" method="post"><input type="email" name="email" placeholder="Your email address" required aria-label="Email address" /><button className="button button-dark" type="submit">Count me in <ArrowRight size={16} /></button></form></section>}
   </main></ScrollEffects>;
