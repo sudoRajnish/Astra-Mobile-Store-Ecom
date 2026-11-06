@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, ArrowUpRight, ShieldCheck, Truck, RotateCcw, Headphones, Smartphone, Sparkles, Crown } from "lucide-react";
 import { connectDb } from "@/lib/db";
 import { Banner, HomepageSection, Product } from "@/models";
 import { ProductCard, type CatalogProduct } from "@/components/product-card";
 import { MotionIntro, ScrollEffects } from "@/components/scroll-effects";
 import { demoCatalog } from "@/lib/demo-catalog";
+import { HeroProductCarousel } from "@/components/hero-product-carousel";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -39,8 +39,7 @@ export default async function Home() {
   return <ScrollEffects><main><script type="application/ld+json" dangerouslySetInnerHTML={{__html:structuredData}} />
     <section className={`hero${primaryBanner?.imageDesktop?" has-banner":""}`} style={primaryBanner?.imageDesktop?{backgroundImage:`url(${primaryBanner.imageDesktop})`,backgroundSize:"cover",backgroundPosition:"center"}:undefined}>
       <MotionIntro><div className="hero-copy"><p className="eyebrow light-eyebrow">{primaryBanner?"THE ASTRA EDIT":"THE NEW STANDARD"}</p><h1>{primaryBanner?.title||<>Find the one<br/>that feels <em>like you.</em></>}</h1><p className="hero-lede">{primaryBanner?.subtitle||"Thoughtful technology. Beautifully chosen. Discover phones that make every day a little more extraordinary."}</p><Link href={primaryBanner?.ctaHref||"/products"} className="button button-light">{primaryBanner?.ctaText||"Explore the collection"} <ArrowRight size={17} /></Link><div className="hero-note"><span className="hero-dot" /> Curated for how you live</div></div></MotionIntro>
-      <div className="hero-product" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><Image className="hero-product-photo" src="/images/products/iphone-16-black.png" alt="" width={900} height={900} priority sizes="(max-width: 650px) 360px, 460px"/><div className="hero-phone-label"><span>JUST ARRIVED</span><b>iPhone 16</b><small>Meet your next favorite.</small></div><div className="hero-spark spark-a">✦</div><div className="hero-spark spark-b">✧</div></div>
-      <div className="hero-index"><span>01</span><i /> 03</div>
+      <HeroProductCarousel />
     </section>
     {banners[1] && <section className="promo-strip"><div><p className="eyebrow">A NOTE FROM ASTRA</p><h2>{banners[1].title}</h2><p>{banners[1].subtitle}</p></div><Link href={banners[1].ctaHref || "/products"} className="text-link">{banners[1].ctaText || "Discover more"} <ArrowUpRight size={16} /></Link></section>}
     {visible("trust")&&<section className="trust-row"><div><Truck /><span><b>Thoughtful delivery</b><small>Carefully packed, right to you</small></span></div><div><ShieldCheck /><span><b>100% authentic</b><small>Only genuine, verified devices</small></span></div><div><RotateCcw /><span><b>Easy 7-day returns</b><small>Shop with complete confidence</small></span></div><div><Headphones /><span><b>Here to help</b><small>Real people, whenever you need</small></span></div></section>}
