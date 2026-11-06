@@ -15,5 +15,11 @@ export function SiteHeader() {
         <CartIndicator />
       </nav>
     </header>
+    <nav className="mobile-site-nav" aria-label="Mobile main navigation">
+      <Link href="/">Home</Link>
+      <Link href="/products">Shop phones</Link>
+      <Link href="/about">About us</Link>
+      <Link href="/faq">FAQs</Link>
+    </nav>
   </>;
 }
