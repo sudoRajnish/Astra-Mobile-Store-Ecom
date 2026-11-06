@@ -137,3 +137,33 @@ body{background:#0a0e17;color:#f4f6fa;font-family:var(--font-inter),"Segoe UI",s
   .cart-line{grid-template-columns:56px minmax(0,1fr);gap:9px}
   .cart-thumb{width:56px;height:68px}
 }
+
+/* Product filters: give the panel a clear, comfortable rhythm at every size. */
+.filter-panel{padding:18px;gap:14px;border-radius:18px;box-shadow:0 14px 40px #0002}
+.filter-panel h2{font:700 18px/1.25 var(--font-sora),"Segoe UI",sans-serif;letter-spacing:-.035em;margin:0 0 2px}
+.filter-panel>label{gap:8px;font-size:10px;letter-spacing:.025em;color:#aeb8ca}
+.filter-panel input,.filter-panel select{height:43px;border-radius:10px;padding:0 12px;font-size:11px;transition:border-color .18s,box-shadow .18s}
+.filter-panel input:focus,.filter-panel select:focus{border-color:#91bd35;outline:none;box-shadow:0 0 0 3px #c8ff4d20}
+.filter-panel input::placeholder{color:#65718a}
+.price-filter{gap:8px}
+.price-filter input{padding:0 10px}
+.filter-panel .button{min-height:46px;border-radius:12px;margin-top:2px}
+.clear-filters{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600}
+.clear-filters:hover,.clear-filters:focus-visible{color:#e0ff9b}
+@media(max-width:850px){
+  .listing-layout{grid-template-columns:minmax(0,1fr);gap:22px}
+  .filter-panel{position:static;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;margin-bottom:0}
+  .filter-panel h2,.filter-panel .button,.filter-panel .clear-filters{grid-column:1/-1}
+  .filter-panel h2{align-self:start}
+}
+@media(max-width:650px){
+  .filter-panel{grid-template-columns:repeat(2,minmax(0,1fr));padding:16px;gap:12px;margin-bottom:22px}
+  .filter-panel>label{min-width:0;font-size:9px}
+  .filter-panel input,.filter-panel select{min-width:0;height:42px;font-size:11px}
+  .filter-panel .button{min-height:46px}
+}
+@media(max-width:380px){
+  .filter-panel{padding:14px;gap:10px}
+  .filter-panel h2{font-size:17px}
+  .filter-panel input,.filter-panel select{padding-left:9px;padding-right:8px;font-size:10px}
+}
