@@ -10,11 +10,11 @@ export async function rateLimit(request: Request, scope: string, max: number, wi
   const bucket = Math.floor(Date.now() / windowMs);
   const expiresAt = new Date((bucket + 2) * windowMs);
   try {
-    const result = await RateLimit.findOneAndUpdate({ key, bucket }, { $inc: { count: 1 }, $setOnInsert: { expiresAt } }, { upsert: true, new: true, setDefaultsOnInsert: true });
+    const result = await RateLimit.findOneAndUpdate({ key, bucket }, { $inc: { count: 1 }, $setOnInsert: { expiresAt } }, { upsert: true, returnDocument: "after", setDefaultsOnInsert: true });
     return result.count <= max;
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === 11000) {
-      const result = await RateLimit.findOneAndUpdate({ key, bucket }, { $inc: { count: 1 } }, { new: true });
+      const result = await RateLimit.findOneAndUpdate({ key, bucket }, { $inc: { count: 1 } }, { returnDocument: "after" });
       return (result?.count ?? max + 1) <= max;
     }
     throw error;

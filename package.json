@@ -12,6 +12,7 @@
     "admin:create": "node --env-file-if-exists=.env.local --import tsx scripts/create-admin.ts"
   },
   "dependencies": {
+    "@google/genai": "^3.6.1",
     "@hookform/resolvers": "^7.0.3",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",

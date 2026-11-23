@@ -75,6 +75,7 @@ const orderSchema = new Schema({
   discount: { type: Number, default: 0 },
 }, { timestamps: true });
 orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ createdAt: -1 });
 
 const couponSchema = new Schema({ code: { type: String, required: true, unique: true, uppercase: true, trim: true }, type: { type: String, enum: ["percentage", "fixed"], required: true }, value: { type: Number, required: true, min: 0 }, minOrder: { type: Number, default: 0 }, maxDiscount: Number, expiresAt: Date, usageLimit: Number, perCustomerLimit: { type: Number, default: 1 }, firstOrderOnly: { type: Boolean, default: false }, productIds: [{ type: Schema.Types.ObjectId, ref: "Product" }], categories: [String], brands: [String], usedCount: { type: Number, default: 0 }, active: { type: Boolean, default: true } }, { timestamps: true });
 const categorySchema = new Schema({ name: { type: String, required: true }, slug: { type: String, required: true, unique: true }, description: String, image: String, active: { type: Boolean, default: true } }, { timestamps: true });

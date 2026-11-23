@@ -17,7 +17,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const Model = parsed.data.type === "category" ? Category : Brand;
     const { type, ...changes } = parsed.data;
-    const record = await Model.findByIdAndUpdate(id, { $set: changes }, { new: true, runValidators: true });
+    const record = await Model.findByIdAndUpdate(id, { $set: changes }, { returnDocument: "after", runValidators: true });
     if (!record) return NextResponse.json({ error: "Record not found." }, { status: 404 });
     await AdminActivityLog.create({ actor: actor.id, actorName: actor.name, action: `${type}.updated`, entity: type, entityId: id, changes });
     return NextResponse.json({ ok: true });

@@ -6,6 +6,18 @@ import { formatINR } from "@/lib/format";
 
 export const dynamic="force-dynamic";
 type Range="today"|"7d"|"30d"|"month"|"custom";
+type RevenueRow={date:string;revenue:number;orders:number};
+function normalizeRevenueRows(rows:unknown):RevenueRow[]{
+  if(!Array.isArray(rows))return [];
+  return rows.flatMap((row):RevenueRow[]=>{
+    if(!row||typeof row!=="object")return [];
+    const record=row as {_id?:unknown;date?:unknown;revenue?:unknown;orders?:unknown};
+    // Mongo's aggregation groups the day under _id; normalize that shape before rendering.
+    const date=typeof record.date==="string"?record.date:typeof record._id==="string"?record._id:"";
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(`${date}T00:00:00.000Z`)))return [];
+    return [{date,revenue:typeof record.revenue==="number"&&Number.isFinite(record.revenue)?record.revenue:0,orders:typeof record.orders==="number"&&Number.isFinite(record.orders)?record.orders:0}];
+  });
+}
 function getWindow(range:Range,from?:string,to?:string){const now=new Date();const indiaOffset=330*60*1000;let start=new Date(now);let end=new Date(now);if(range==="today"){start.setUTCHours(0,0,0,0);start=new Date(start.getTime()-indiaOffset);}else if(range==="7d")start=new Date(now.getTime()-6*86400000);else if(range==="month")start=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),1)-indiaOffset);else if(range==="custom"){const a=from?new Date(new Date(`${from}T00:00:00.000Z`).getTime()-indiaOffset):new Date(now.getTime()-29*86400000);const b=to?new Date(new Date(`${to}T23:59:59.999Z`).getTime()-indiaOffset):now;if(!Number.isNaN(a.getTime())&&!Number.isNaN(b.getTime())&&a<=b&&b.getTime()-a.getTime()<=31*86400000){start=a;end=b;}else{start=new Date(now.getTime()-29*86400000);range="30d";}}else start=new Date(now.getTime()-29*86400000);return{range,start,end};}
 
 export default async function AdminDashboard({searchParams}:{searchParams:Promise<{range?:string;from?:string;to?:string}>}){
@@ -24,8 +36,8 @@ export default async function AdminDashboard({searchParams}:{searchParams:Promis
       Order.aggregate([{$match:{...match,paymentStatus:"paid"}},{$unwind:"$items"},{$group:{_id:"$items.product",name:{$first:"$items.name"},quantity:{$sum:"$items.quantity"},revenue:{$sum:{$multiply:["$items.price","$items.quantity"]}}}},{$sort:{quantity:-1}},{$limit:5}]),
     ]);
     const counts=new Map(statusCounts.map(item=>[item._id,item.count]));
-    data={revenue:revenue[0]?.value||0,orders,customers,products,pending:(counts.get("pending")||0)+(counts.get("confirmed")||0),processing:counts.get("processing")||0,delivered:counts.get("delivered")||0,cancelled:counts.get("cancelled")||0,lowStock,outOfStock,recent:JSON.parse(JSON.stringify(recent)),sales:daily,top};
-  }catch{data=null;}
+    data={revenue:revenue[0]?.value||0,orders,customers,products,pending:(counts.get("pending")||0)+(counts.get("confirmed")||0),processing:counts.get("processing")||0,delivered:counts.get("delivered")||0,cancelled:counts.get("cancelled")||0,lowStock,outOfStock,recent:JSON.parse(JSON.stringify(recent)),sales:normalizeRevenueRows(daily),top};
+  }catch(error){console.error("Admin dashboard data unavailable",error);data=null;}
   if(!data)return <main className="admin-content"><div className="admin-page-head"><div><p className="eyebrow">STORE OVERVIEW</p><h1>Dashboard</h1></div></div><div className="admin-alert"><CircleAlert/>Database unavailable. Check MONGODB_URI and the MongoDB connection before using live store data.</div></main>;
   const stats=[["Revenue",formatINR(data.revenue),Wallet,"Paid orders in selected period"],["Orders",data.orders,ShoppingBag,"Orders in selected period"],["Customers",data.customers,Users,"Registered customer accounts"],["Products",data.products,PackageCheck,"Catalog records"]] as const;const maxRevenue=Math.max(1,...data.sales.map(row=>row.revenue));
   return <main className="admin-content"><div className="admin-page-head"><div><p className="eyebrow">STORE OVERVIEW</p><h1>Dashboard</h1><p>Sales and order activity from your store records.</p></div><Link href="/products" className="admin-view-store">View storefront <ArrowUpRight size={15}/></Link></div>
