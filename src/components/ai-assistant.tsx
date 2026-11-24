@@ -38,8 +38,17 @@ export function AiAssistant() {
     try {
       const completed = (retry ? messages.slice(0, -1) : messages).filter((item, index) => !(index === 0 && item.role === "assistant" && item.text === welcome));
       const response = await fetch("/api/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, history: completed.slice(-12).map(({ role, text: content }) => ({ role, content })) }) });
-      const data = await response.json();
+      const responseText = await response.text();
+      let data: { error?: string; reply?: string; products?: ChatProduct[] };
+      try {
+        data = JSON.parse(responseText) as typeof data;
+      } catch {
+        throw new Error(response.ok
+          ? "ASTRA AI returned an invalid response. Please try again."
+          : `ASTRA AI is taking too long to respond (HTTP ${response.status}). Please try again.`);
+      }
       if (!response.ok) throw new Error(data.error || "ASTRA AI is unavailable. Please try again.");
+      if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("ASTRA AI returned an invalid response. Please try again.");
       setMessages([...next, { role: "assistant", text: data.reply }]); setProducts(data.products || []);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to reach ASTRA AI. Please try again."); }
     finally { setLoading(false); }
