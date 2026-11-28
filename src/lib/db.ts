@@ -9,7 +9,7 @@ export async function connectDb(): Promise<typeof mongoose> {
   if (!uri) throw new Error("MONGODB_URI is not configured. Copy .env.example to .env.local and set it.");
   if (cache.conn) return cache.conn;
   if (!cache.promise) {
-    cache.promise = mongoose.connect(uri!, { bufferCommands: false, maxPoolSize: 10 });
+    cache.promise = mongoose.connect(uri!, { bufferCommands: false, maxPoolSize: 10, serverSelectionTimeoutMS: 5000, connectTimeoutMS: 5000, socketTimeoutMS: 20_000 });
   }
   try {
     cache.conn = await cache.promise;

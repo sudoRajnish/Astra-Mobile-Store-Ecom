@@ -37,20 +37,34 @@ export function AiAssistant() {
     setMessages(next); setInput(""); setLoading(true); setError(""); setProducts([]);
     try {
       const completed = (retry ? messages.slice(0, -1) : messages).filter((item, index) => !(index === 0 && item.role === "assistant" && item.text === welcome));
-      const response = await fetch("/api/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, history: completed.slice(-12).map(({ role, text: content }) => ({ role, content })) }) });
-      const responseText = await response.text();
+      const controller = new AbortController();
+      const abortTimer = window.setTimeout(() => controller.abort(), 58_000);
+      let response: Response;
+      let responseText: string;
+      try {
+        response = await fetch("/api/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, history: completed.slice(-12).map(({ role, text: content }) => ({ role, content })) }), signal: controller.signal });
+        responseText = await response.text();
+      } finally {
+        window.clearTimeout(abortTimer);
+      }
       let data: { error?: string; reply?: string; products?: ChatProduct[] };
       try {
         data = JSON.parse(responseText) as typeof data;
       } catch {
         throw new Error(response.ok
           ? "ASTRA AI returned an invalid response. Please try again."
-          : `ASTRA AI is taking too long to respond (HTTP ${response.status}). Please try again.`);
+          : process.env.NODE_ENV === "development"
+            ? `ASTRA AI took too long to respond (HTTP ${response.status}). Please try again.`
+            : "ASTRA AI took too long to respond. Please try again.");
       }
       if (!response.ok) throw new Error(data.error || "ASTRA AI is unavailable. Please try again.");
       if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("ASTRA AI returned an invalid response. Please try again.");
       setMessages([...next, { role: "assistant", text: data.reply }]); setProducts(data.products || []);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to reach ASTRA AI. Please try again."); }
+    } catch (cause) {
+      setError(cause instanceof DOMException && cause.name === "AbortError"
+        ? "ASTRA AI is taking too long. Please try again."
+        : cause instanceof Error ? cause.message : "Unable to reach ASTRA AI. Please try again.");
+    }
     finally { setLoading(false); }
   }
 
